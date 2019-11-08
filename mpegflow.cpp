@@ -296,6 +296,8 @@ void output_vectors_raw(int frameIndex, int64_t pts, char pictType, vector<AVMot
 		int mvdx = mv.dst_x - mv.src_x;
 		int mvdy = mv.dst_y - mv.src_y;
 
+		printf("****** %d, %d, %d\n", mvdx, mvdy, mv.motion_scale);
+
 		printf("%d\t%d\t%d\t%d\n", mv.dst_x, mv.dst_y, mvdx, mvdy);
 	}
 }

@@ -6,11 +6,11 @@
 #include <iomanip>
 #include <utility>
 
-#include <opencv2/core.hpp>
+#include <opencv2/core/core.hpp>
 #include <opencv2/videoio.hpp>
-#include <opencv2/imgproc.hpp>
+#include <opencv2/imgproc/imgproc.hpp>
 #include <opencv2/imgcodecs.hpp>
-#include <opencv2/highgui.hpp>
+#include <opencv2/highgui/highgui.hpp>
 
 using namespace std;
 using namespace cv;
@@ -23,7 +23,8 @@ void draw_arrow(Mat img, Point pStart, Point pEnd, double len, double alphaDegre
 {    
 	const double PI = acos(-1);
 	const int lineThickness = 1;
-	const int lineType = CV_AA;
+	//const int lineType = CV_AA;
+	const int lineType = CV_8U;
 
 	double angle = atan2((double)(pStart.y - pEnd.y), (double)(pStart.x - pEnd.x));  
 	line(img, pStart, pEnd, lineColor, lineThickness, lineType);
@@ -33,7 +34,7 @@ void draw_arrow(Mat img, Point pStart, Point pEnd, double len, double alphaDegre
 		for(int k = 0; k < 2; k++)
 		{
 			int sign = k == 1 ? 1 : -1;
-			Point arrow(pEnd.x + len * cos(angle + sign * PI * alphaDegrees / 180), pEnd.y + len * sin(angle + sign * PI * alphaDegrees / 180));
+			Point arrow(pEnd.x +  len * cos(angle + sign * PI * alphaDegrees / 180), pEnd.y + len * sin(angle + sign * PI * alphaDegrees / 180));
 			line(img, pEnd, arrow, lineColor, lineThickness, lineType);   
 		}
 	}
@@ -46,7 +47,12 @@ void vis_flow(pair<Mat, int> flow, Mat frame, const char* dumpDir)
 	int rows = flowComponents[0].rows;
 	int cols = flowComponents[0].cols;
 
-	Mat img = frame.clone();
+	//Mat img = frame.clone();
+	Mat img(frame.rows, frame.cols, CV_8UC3, Scalar(0,0,0));
+	Mat img2(rows, cols, CV_8UC1, Scalar(0, 0, 0));
+	//printf("r,c: %d, %d", frame.rows, frame.cols);
+	//int relSize = 16;
+	//Mat img3(rows*relSize, cols*relSize, CV_8UC1, Scalar(0, 0, 0) );
 	for(int i = 0; i < rows; i++)
 	{
 		for(int j = 0; j < cols; j++)
@@ -54,17 +60,24 @@ void vis_flow(pair<Mat, int> flow, Mat frame, const char* dumpDir)
 			int dx = flowComponents[0].at<int>(i, j);
 			int dy = flowComponents[1].at<int>(i, j);
 			int occupancy = flowComponents[2].at<int>(i, j);
+			img2.at<uchar>(i, j) = (dx*dx + dy*dy);
 			
-			Point start(double(j) / cols * img.cols + img.cols / cols / 2, double(i) / rows * img.rows + img.rows / rows / 2);
-			Point end(start.x + dx, start.y + dy);
+			//Point start(double(j) / cols * img.cols + img.cols / cols / 2, double(i) / rows * img.rows + img.rows / rows / 2);
+			//Point end(start.x + dx, start.y + dy);
 			
-			draw_arrow(img, start, end, 2.0, 20.0, CV_RGB(255, 0, 0), (occupancy == 1 || occupancy == 2) ? CV_RGB(0, 255, 0) : CV_RGB(0, 255, 255));
+			//draw_arrow(img, start, end, 2.0 + 3.0, 20.0, CV_RGB(255, 0, 0), (occupancy == 1 || occupancy == 2) ? CV_RGB(0, 255, 0) : CV_RGB(0, 255, 255));
 		}
 	}
 	
 	stringstream s;
 	s << dumpDir << "/" << setfill('0') << setw(6) << flow.second << ".png";
-	imwrite(s.str(), img);
+	//resize(img2,img3,Size(rows*20,cols*20),0,0,INTER_NEAREST);
+	// for (int i = 0; i < rows*relSize; i++) {
+	// 	for (int j = 0; j < cols*relSize; j++) {
+	// 		img3.at<uchar>(i, j) = img2.at<uchar>(i/relSize, j/relSize);
+	// 	}
+	// }
+	imwrite(s.str(), img2);
 }
 
 pair<Mat, int> read_flow()
